@@ -9,7 +9,7 @@
 import UIKit
 import QuartzCore
 
-class ViewController: UIViewController  {
+class ViewController: UIViewController, UITextFieldDelegate  {
     
     var tapRecognizers: [UITapGestureRecognizer] = []
     var columnList: [ConnectColumn] = []
@@ -68,7 +68,7 @@ class ViewController: UIViewController  {
         playerButton.setTitle("\(boardData.getCurrentPlayer().rawValue) is the current player", for: UIControl.State.disabled)
         playerButton.setTitleColor(UIColor.blue, for: UIControl.State.disabled)
         playerButton.setTitleColor(UIColor.blue, for: UIControl.State.normal)
-        playerButton.titleLabel?.font = UIFont(name: "American Typewriter", size: 16)
+        playerButton.titleLabel?.font = UIFont(name: "American Typewriter", size: 20)
         playerButton.titleLabel?.backgroundColor = UIColor.white
         playerButton.layer.borderColor = UIColor.blue.cgColor
         playerButton.layer.borderWidth = 1.0
@@ -86,15 +86,15 @@ class ViewController: UIViewController  {
         
         playerButton.translatesAutoresizingMaskIntoConstraints = false
         //playerButton.centerXAnchor.constraint(equalTo: self.view.centerXAnchor).isActive = true
-        playerButton.trailingAnchor.constraint(equalTo: fullBoard.trailingAnchor).isActive = true
+        playerButton.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -20).isActive = true
         playerButton.topAnchor.constraint(equalTo: fullBoard.bottomAnchor, constant: 10).isActive = true
 
-        
+        //creates button that resets the board
         resetButton.isEnabled = true
         resetButton.backgroundColor = UIColor.white
         resetButton.setTitle("reset", for: UIControl.State.normal)
         resetButton.setTitleColor(UIColor.blue, for: UIControl.State.normal)
-        resetButton.titleLabel?.font = UIFont(name: "American Typewriter", size: 16)
+        resetButton.titleLabel?.font = UIFont(name: "American Typewriter", size: 20)
         resetButton.layer.borderColor = UIColor.blue.cgColor
         resetButton.layer.borderWidth = 1.0
         resetButton.layer.cornerRadius = 16.0
@@ -112,9 +112,11 @@ class ViewController: UIViewController  {
         let buttonConstraint = resetButton.leadingAnchor.constraint(equalTo: fullBoard.leadingAnchor)
         buttonConstraint.priority = .defaultLow
         buttonConstraint.isActive = true
+        resetButton.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 20).isActive = true
         resetButton.trailingAnchor.constraint(equalTo: playerButton.leadingAnchor).isActive = true
         resetButton.topAnchor.constraint(equalTo: playerButton.topAnchor).isActive = true
         
+        //creates label that says ConnectForecast
         let gameName = PaddingLabel()
         gameName.backgroundColor = UIColor.blue
         gameName.text = "ConnectForecast"
@@ -134,6 +136,8 @@ class ViewController: UIViewController  {
         gameName.bottomAnchor.constraint(equalTo: fullBoard.topAnchor, constant: -15).isActive = true
         gameName.centerXAnchor.constraint(equalTo: self.view.centerXAnchor).isActive = true
         
+        
+        //creates label that displays the city, temperature, and description of weather
         weatherLabel.backgroundColor = UIColor.blue
         weatherLabel.text = "I wonder what the weather is... "
         weatherLabel.textColor = UIColor.white
@@ -143,13 +147,19 @@ class ViewController: UIViewController  {
         weatherLabel.layer.masksToBounds = true
         weatherLabel.textAlignment = .center
         weatherLabel.font = UIFont(name: "American Typewriter", size: 20)
+        weatherLabel.adjustsFontSizeToFitWidth = true
 
         view.addSubview(weatherLabel)
         
         weatherLabel.translatesAutoresizingMaskIntoConstraints = false
         weatherLabel.centerXAnchor.constraint(equalTo: self.view.centerXAnchor).isActive = true
         weatherLabel.topAnchor.constraint(equalTo: playerButton.bottomAnchor, constant: 10).isActive = true
+        weatherLabel.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 20).isActive = true
+        weatherLabel.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -20).isActive = true
         
+        
+        //text field that allows user to change which city's weather information is displayed
+        cityInput.delegate = self
         cityInput.backgroundColor = UIColor.white
         cityInput.placeholder = "input city "
         cityInput.textColor = UIColor.blue
@@ -161,6 +171,7 @@ class ViewController: UIViewController  {
         cityInput.font = UIFont(name: "American Typewriter", size: 20)
         cityInput.isUserInteractionEnabled = true
         cityInput.enablesReturnKeyAutomatically = true
+        cityInput.adjustsFontSizeToFitWidth = true
         
         view.addSubview(cityInput)
         
@@ -168,28 +179,6 @@ class ViewController: UIViewController  {
         cityInput.centerXAnchor.constraint(equalTo: self.view.centerXAnchor).isActive = true
         cityInput.topAnchor.constraint(equalTo: weatherLabel.bottomAnchor, constant: 10).isActive = true
         cityInput.widthAnchor.constraint(equalToConstant: 200).isActive = true
-        
-        
-
-
-        
-       
-        /*
-        playerLabel.text = "\(boardData.getCurrentPlayer().rawValue) is the current player"
-        playerLabel.font = playerLabel.font.withSize(24)
-        playerLabel.backgroundColor = UIColor.white
-        playerLabel.layer.borderColor = UIColor.blue.cgColor
-        playerLabel.layer.borderWidth = 3.0
-        playerLabel.layer.cornerRadius = 5.0
-        playerLabel.layer.masksToBounds = true
-        playerLabel.textAlignment = .center
-        playerLabel.frame = CGRect(x: 0, y: 0, width: playerLabel.intrinsicContentSize.width, height: playerLabel.intrinsicContentSize.width)
-        view.addSubview(playerLabel)
-        
-        playerLabel.translatesAutoresizingMaskIntoConstraints = false
-        playerLabel.centerXAnchor.constraint(equalTo: self.view.centerXAnchor).isActive = true
-        playerLabel.topAnchor.constraint(equalTo: fullBoard.bottomAnchor, constant: 10).isActive = true
- */
         
         
     }
@@ -295,6 +284,23 @@ class ViewController: UIViewController  {
             //playerLabel.text = "\(boardData.getCurrentPlayer().rawValue) is the current player"
             self.playerButton.setTitle("\(self.boardData.getCurrentPlayer().rawValue) is the current player", for: UIControl.State.disabled)
         } )
+    }
+    
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        print("made it to this part of the file")
+        
+        let newCity = textField.text
+        Weather.getWeatherFromWeb(forCity: newCity!) { (result: Weather) in
+            DispatchQueue.main.async {
+                self.weatherLabel.text = "\(result.city) - \(result.temp)˚F - \(result.description)"
+            }
+        }
+    }
+    
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
     }
 
 

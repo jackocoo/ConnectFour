@@ -22,7 +22,6 @@ struct Weather {
     }
     
     
-    
     init(dictFromJSON: [String : Any], cityOfInterest: String) throws {
         guard let temp = dictFromJSON["temp_f"] as? Double else {
             throw WeatherError.invalid("Something went wrong with temp")
@@ -40,8 +39,10 @@ struct Weather {
     }
     
     //will this work with the parameter "city: String")
-    static func getWeatherFromWeb(forCity city: String, completion: @escaping (Weather) -> Void) {
-        let link = requestPath + city
+    static func getWeatherFromWeb(forCity city: String, completion: @escaping (Weather) -> Void)  {
+        
+        let link: String = requestPath + city
+        //print("This is the link: " \(link)")"
         let request = URLRequest(url: URL(string: link)!)
         
         var result: Weather? = nil
